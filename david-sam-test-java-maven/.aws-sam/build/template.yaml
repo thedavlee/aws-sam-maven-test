@@ -1,0 +1,60 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: 'david-sam-test-java-maven
+
+  Sample SAM Template for david-sam-test-java-maven
+
+  '
+Globals:
+  Function:
+    Timeout: 20
+Parameters:
+  DatadogAPIKey:
+    Description: Required. Datadog API Key
+    Type: String
+Resources:
+  HelloWorldFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: HelloWorldFunction
+      Handler: helloworld.App::handleRequest
+      Runtime: java11
+      Layers:
+      - Fn::Sub: arn:aws:lambda:${AWS::Region}:464622532012:layer:Datadog-Extension:20
+      - Fn::Sub: arn:aws:lambda:${AWS::Region}:464622532012:layer:dd-trace-java:4
+      Architectures:
+      - x86_64
+      MemorySize: 512
+      Events:
+        HelloWorld:
+          Type: Api
+          Properties:
+            Path: /hello
+            Method: get
+      Environment:
+        Variables:
+          DD_API_KEY:
+            Ref: DatadogAPIKey
+          JAVA_TOOL_OPTIONS: -javaagent:/opt/java/lib/dd-java-agent.jar
+          DD_LOGS_INJECTION: true
+          DD_JMXFETCH_ENABLED: false
+          DD_TRACE_ENABLED: true
+    Metadata:
+      SamResourceId: HelloWorldFunction
+Outputs:
+  HelloWorldApi:
+    Description: API Gateway endpoint URL for Prod stage for Hello World function
+    Value:
+      Fn::Sub: https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/hello/
+  HelloWorldFunction:
+    Description: Hello World Lambda Function ARN
+    Value:
+      Fn::GetAtt:
+      - HelloWorldFunction
+      - Arn
+  HelloWorldFunctionIamRole:
+    Description: Implicit IAM Role created for Hello World function
+    Value:
+      Fn::GetAtt:
+      - HelloWorldFunctionRole
+      - Arn
